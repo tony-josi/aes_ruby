@@ -26,14 +26,18 @@ module AES_CORE
 
     def aes_expand_key(raw_key)
 
-        raw_key_arr = raw_key.bytes
+        raw_key_arr = Array.new(@actual_key_len, 0)
+        raw_key_len = raw_key.length > @actual_key_len ? @actual_key_len : raw_key.length
+        raw_key_arr[0 .. (raw_key_len - 1)] = raw_key.bytes[0 .. (raw_key_len - 1)]
+
         expanded_key_arr = raw_key_arr.dup
-        actual_key_len = raw_key.length
+
+        #p expanded_key_arr
 
         # Increment an offset to the current filled 
         # position in the expanded key output array */
         cur_exp_key_offset = 0
-        cur_exp_key_offset += actual_key_len;
+        cur_exp_key_offset += @actual_key_len;
 
         round_key_index = 1
 
@@ -45,6 +49,8 @@ module AES_CORE
 
             temp_key_arr_2 = aes_key_scheduler(round_key_index, temp_key_arr_1)
 
+            temp_key_arr_1[0 .. (AES_WORD_SIZE - 1)] = expanded_key_arr[(cur_exp_key_offset - @actual_key_len) .. (cur_exp_key_offset - @actual_key_len + AES_WORD_SIZE - 1)]
+
             temp_key_arr_1 = aes_xor_word(temp_key_arr_1, temp_key_arr_2);
             expanded_key_arr += temp_key_arr_1
 
@@ -52,23 +58,32 @@ module AES_CORE
     
             #/* Compute key for remaining words in the block */
             cur_exp_key_offset = aes_compute_remaining_words(3, expanded_key_arr, cur_exp_key_offset, \
-            @expanded_key_len, actual_key_len);
+            @expanded_key_len, @actual_key_len);
+
+            #p expanded_key_arr
             
-            if actual_key_len == 32 
+            if @actual_key_len == AES256_PLAIN_KEY_SIZE 
                 #/* Do special key schedule if i >= N & (i % n) == 4 */
-                aes_key_scheduler_4th_word(expand_key, cur_exp_key_offset, \
-                @expanded_key_len, actual_key_len)
+                cur_exp_key_offset = aes_key_scheduler_4th_word(expanded_key_arr, cur_exp_key_offset, \
+                @expanded_key_len, @actual_key_len)
+
+                #p expanded_key_arr
                 
                 cur_exp_key_offset = aes_compute_remaining_words(3, expanded_key_arr, cur_exp_key_offset, \
-                @expanded_key_len, actual_key_len)
+                @expanded_key_len, @actual_key_len)
+
+                #p expanded_key_arr
     
-            elsif actual_key_len == 24 
+            elsif @actual_key_len == AES192_PLAIN_KEY_SIZE 
                 cur_exp_key_offset = aes_compute_remaining_words(2, expanded_key_arr, cur_exp_key_offset, \
-                @expanded_key_len, actual_key_len)
+                @expanded_key_len, @actual_key_len)
 
             end
             
             round_key_index += 1
+
+            
+
         end
         
         # if @key_len == 192
@@ -167,12 +182,15 @@ module AES_CORE
 
             for j in cur_exp_key_offset .. (cur_exp_key_offset + AES_WORD_SIZE - 1) do
 
-                expanded_key_arr[i] = temp_arr_1[i - cur_exp_key_offset]
+                expanded_key_arr[j] = temp_arr_1[j - cur_exp_key_offset]
 
             end
 
             cur_exp_key_offset += AES_WORD_SIZE
             cur_exp_key_offset
+
+        else
+            return cur_exp_key_offset
 
         end
 
@@ -210,7 +228,7 @@ class AES
 
 end
 
-aes_obj = AES.new(128)
-exp_k = aes_obj.aes_expand_key("1234567890123456")
+aes_obj = AES.new(256)
+exp_k = aes_obj.aes_expand_key("12345678123456781234567812345678")
 p exp_k
 p "Length: #{exp_k.length}"
