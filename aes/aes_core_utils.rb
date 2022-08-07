@@ -28,7 +28,7 @@ module AES_CORE_UTILS
 
         for i in 0..(AES_WORD_SIZE - 1) do
             for j in 0..(AES_WORD_SIZE - 1) do
-                arr_out[ offset + (j * 4) + i ] = arr_in[[i][j]
+                arr_out[ offset + (j * 4) + i ] = arr_in[i][j]
             end
         end
 
