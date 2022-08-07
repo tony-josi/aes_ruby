@@ -1,24 +1,13 @@
 
 require './aes_lut.rb'
 require './aes_consts.rb'
+require './aes_core_utils.rb'
 require './aes_key_expansion.rb'
 
 module AES_CORE
 
     include AES_KEY_EXPAND
-
-    def aes_xor_word(arr_a, arr_b)
-        
-        op_arr = []
-        
-        #p arr_a, arr_b
-        for i in 0..(AES_WORD_SIZE - 1) do
-            op_arr[i] = arr_a[i] ^ arr_b[i]
-        end
-        
-        op_arr
-        
-    end
+    include AES_CORE_UTILS
 
 end
 
